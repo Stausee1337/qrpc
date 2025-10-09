@@ -1,31 +1,32 @@
 package lexer
 
+import (
+	"fmt"
 
-type LexError struct {
-	Span Span
-}
-
-func (e *LexError) Error() string {
-	return "unexpected token"
-}
+	"github.com/stausee1337/qrpc/source"
+)
 
 type lexer struct {
 	source string
+	file   string
 	start  uint
 	end    uint
 	bol    uint
 	lineno uint
 }
 
-func LexToStream(s string) ([]Token, error) {
-	l := lexer{source: s, lineno: 1}
+func LexToStream(s string, file string) ([]Token, *source.SyntaxError) {
+	l := lexer{source: s, file: file, lineno: 1}
 
 	slice := make([]Token, 0)
 	for {
 		tok := l.lex()
 		// fmt.Printf("%v, %v\n", l.end, uint(len(l.source)));
 		if tok.Kind == Invalid {
-			return nil, &LexError{Span: tok.Span}
+			return nil, &source.SyntaxError {
+				Pos: tok.Pos,
+				Message: fmt.Sprintf("unexpected character %v",  tok.Value),
+			}
 		}
 		slice = append(slice, tok)
 		if tok.Kind == EOF {
@@ -41,7 +42,7 @@ func (l *lexer) lex() Token {
 	l.start = l.end
 	if l.start >= uint(len(l.source)) {
 		return Token{
-			Span:  l.position(),
+			Pos:  l.position(),
 			Kind:  EOF,
 			Value: "",
 		}
@@ -78,10 +79,13 @@ func (l *lexer) lex() Token {
 	case '?':
 		l.end++
 		return l.bindEmptyToken(Question)
+	case '|':
+		l.end++
+		return l.bindEmptyToken(VBar)
 	case '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
 		return l.lexIdentOrKeyword()
 	default:
-		return l.bindEmptyToken(Invalid)
+		return l.bindValueToken(Invalid, string(l.source[l.end]))
 	}
 
 }
@@ -143,7 +147,7 @@ func (l *lexer) skipWhitespace() {
 
 func (l *lexer) bindEmptyToken(kind Kind) Token {
 	return Token{
-		Span:  l.position(),
+		Pos:  l.position(),
 		Kind:  kind,
 		Value: "",
 	}
@@ -151,17 +155,18 @@ func (l *lexer) bindEmptyToken(kind Kind) Token {
 
 func (l *lexer) bindValueToken(kind Kind, value string) Token {
 	return Token{
-		Span:  l.position(),
+		Pos:  l.position(),
 		Kind:  kind,
 		Value: value,
 	}
 }
 
-func (l *lexer) position() Span {
-	return Span{
+func (l *lexer) position() source.Position {
+	return source.Position {
 		Start:  l.start,
 		End:    l.end,
 		Lineno: l.lineno,
 		Column: (l.start - l.bol) + 1,
+		File: l.file,
 	}
 }

@@ -1,6 +1,10 @@
 package lexer
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/stausee1337/qrpc/source"
+)
 
 const (
 	Invalid Kind = iota
@@ -15,6 +19,7 @@ const (
 	Comma
 	Semicolon
 	Question
+	VBar
 
 	Ident
 
@@ -51,6 +56,8 @@ func (k Kind) String() string {
 		return "Semicolon"
 	case Question:
 		return "Question"
+	case VBar:
+		return "VBar"
 	case Ident:
 		return "Ident"
 	case KeywordEnum:
@@ -69,22 +76,15 @@ func (k Kind) String() string {
 
 type Kind int
 
-type Span struct {
-	Start  uint
-	End    uint
-	Lineno uint
-	Column uint
-}
-
 type Token struct {
-	Span  Span
-	Kind  Kind
-	Value string
+	Pos   	source.Position
+	Kind  	Kind
+	Value 	string
 }
 
 func (t *Token) String() string {
 	if t.Value == "" {
-		return fmt.Sprintf("%v@%v:%v", t.Kind.String(), t.Span.Lineno, t.Span.Column);
+		return fmt.Sprintf("%v@%v:%v", t.Kind.String(), t.Pos.Lineno, t.Pos.Column);
 	}
-	return fmt.Sprintf("%v@%v:%v \"%v\"", t.Kind.String(), t.Span.Lineno, t.Span.Column, t.Value);
+	return fmt.Sprintf("%v@%v:%v \"%v\"", t.Kind.String(), t.Pos.Lineno, t.Pos.Column, t.Value);
 }
