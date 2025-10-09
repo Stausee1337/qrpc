@@ -1,0 +1,39 @@
+
+record Script {
+    uuid: UUID;
+    name: string;
+    createdAt: float;
+    divisions: Division[];
+}
+
+record Division {
+    name: string;
+    description: string;
+    textCues: TextCuePair[];
+    previousTotals: uint[];
+}
+
+record TextCuePair {
+    request: TextCue?;
+    response: TextCue;
+    previousScores: uint[];
+}
+
+record TextCue {
+    actors: string[];
+    text: string;
+}
+
+record CommitScoreData {
+    scriptId: UUID;
+    divisionIdx: uint;
+    newScores: uint[];
+}
+
+service script {
+    query scripts(): Script[];
+    query script(uuid: UUID): Script;
+    mutation commitScores(data: CommitScoreData): empty;
+    mutation renameScript();
+}
+
