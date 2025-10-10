@@ -12,17 +12,19 @@ type parser struct {
 	position uint
 }
 
-func ParseTokenStream(stream []lexer.Token) *source.SyntaxError {
+func ParseTokenStream(stream []lexer.Token) ([]Item, *source.SourceError) {
 	p := parser { stream: stream }
 
+	items := make([]Item, 0)
 	for !p.isEOF() {
-		_, err := p.parseItem();
-		if err != nil { return err }
+		item, err := p.parseItem();
+		if err != nil { return nil, err }
+		items = append(items, item)
 	}
-	return nil
+	return items, nil
 }
 
-func (p *parser) parseItem() (Item, *source.SyntaxError) {
+func (p *parser) parseItem() (Item, *source.SourceError) {
 	tok := p.current()
 
 	switch tok.Kind {
@@ -37,7 +39,7 @@ func (p *parser) parseItem() (Item, *source.SyntaxError) {
 	}
 }
 
-func (p *parser) parseEnum() (*IEnum, *source.SyntaxError) {
+func (p *parser) parseEnum() (*IEnum, *source.SourceError) {
 	name, err := p.expect(lexer.Ident)
 	if err != nil { return nil, err }
 
@@ -67,7 +69,7 @@ func (p *parser) parseEnum() (*IEnum, *source.SyntaxError) {
 	}, nil
 }
 
-func (p *parser) parseRecord() (*IRecord, *source.SyntaxError) {
+func (p *parser) parseRecord() (*IRecord, *source.SourceError) {
 	name, err := p.expect(lexer.Ident)
 	if err != nil { return nil, err }
 
@@ -103,14 +105,14 @@ func (p *parser) parseRecord() (*IRecord, *source.SyntaxError) {
 	}, nil
 }
 
-func (p *parser) parseService() (*IService, *source.SyntaxError) {
+func (p *parser) parseService() (*IService, *source.SourceError) {
 	name, err := p.expect(lexer.Ident)
 	if err != nil { return nil, err }
 
 	_, err = p.expect(lexer.LBrace)
 	if err != nil { return nil, err }
 
-	fields := make([]Operation, 0)
+	operations := make([]Operation, 0)
 	for p.current().Kind != lexer.RBrace && !p.isEOF() {
 		operation, err := p.parseOperation()
 		if err != nil { return nil, err }
@@ -118,7 +120,7 @@ func (p *parser) parseService() (*IService, *source.SyntaxError) {
 		_, err = p.expect(lexer.Semicolon);
 		if err != nil { return nil, err }
 
-		fields = append(fields, operation)
+		operations = append(operations, operation)
 	}
 
 	_, err = p.expect(lexer.RBrace)
@@ -126,10 +128,11 @@ func (p *parser) parseService() (*IService, *source.SyntaxError) {
 
 	return &IService{
 		Name: makeIdent(name),
+		Operations: operations,
 	}, nil
 }
 
-func bindItem[K I](p *parser, body func() (K, *source.SyntaxError)) (Item, *source.SyntaxError) {
+func bindItem[K I](p *parser, body func() (K, *source.SourceError)) (Item, *source.SourceError) {
 	start := p.advance()
 
 	data, err := body()
@@ -145,7 +148,7 @@ func bindItem[K I](p *parser, body func() (K, *source.SyntaxError)) (Item, *sour
 	}, nil
 }
 
-func (p *parser) parseOperation() (Operation, *source.SyntaxError) {
+func (p *parser) parseOperation() (Operation, *source.SourceError) {
 	start := p.current()
 	var kind OperationKind
 
@@ -179,21 +182,17 @@ func (p *parser) parseOperation() (Operation, *source.SyntaxError) {
 		inputs = append(inputs, input)
 	}
 
-	end, err := p.expect(lexer.RParen)
+	_, err = p.expect(lexer.RParen)
 	if err != nil { return Operation{}, err }
 
-	endPos := &end.Pos
-	var resultType *Type
+	_, err = p.expect(lexer.Colon)
+	if err != nil { return Operation{}, err }
 
-	if p.skipIf(lexer.Colon) != nil {
-		r, err := p.parseType()
-		if err != nil { return Operation{}, err }
-		resultType = &r
-		endPos = &resultType.Pos
-	}
+	resultType, err := p.parseType()
+	if err != nil { return Operation{}, err }
 
 	return Operation{
-		Pos: source.MorphPosition(&start.Pos, endPos),
+		Pos: source.MorphPosition(&start.Pos, &resultType.Pos),
 		Kind: kind,
 		Name: makeIdent(name),
 		Inputs: inputs,
@@ -201,7 +200,7 @@ func (p *parser) parseOperation() (Operation, *source.SyntaxError) {
 	}, nil
 }
 
-func (p *parser) parseNamedInput() (NamedInput, *source.SyntaxError) {
+func (p *parser) parseNamedInput() (NamedInput, *source.SourceError) {
 	name, err := p.expect(lexer.Ident)
 	if err != nil { return NamedInput{}, err }
 
@@ -218,7 +217,7 @@ func (p *parser) parseNamedInput() (NamedInput, *source.SyntaxError) {
 	}, nil;
 }
 
-func (p *parser) parseType() (Type, *source.SyntaxError) {
+func (p *parser) parseType() (Type, *source.SourceError) {
 	base, err := p.parsePostfixType();
 	if err != nil { return Type{}, err }
 
@@ -240,7 +239,7 @@ func (p *parser) parseType() (Type, *source.SyntaxError) {
 	}, nil
 }
 
-func (p *parser) parsePostfixType() (Type, *source.SyntaxError) {
+func (p *parser) parsePostfixType() (Type, *source.SourceError) {
 	ty, err := p.parseRefType()
 	if err != nil { return Type{}, err }
 
@@ -264,7 +263,7 @@ func (p *parser) parsePostfixType() (Type, *source.SyntaxError) {
 	return ty, nil
 }
 
-func (p *parser) parseRefType() (Type, *source.SyntaxError) {
+func (p *parser) parseRefType() (Type, *source.SourceError) {
 	ident, err := p.expect(lexer.Ident)
 	if err != nil { return Type{}, err }
 
@@ -284,7 +283,7 @@ func (p *parser) skipIf(kind lexer.Kind) *lexer.Token {
 	return nil
 }
 
-func (p *parser) expect(kind lexer.Kind) (*lexer.Token, *source.SyntaxError) {
+func (p *parser) expect(kind lexer.Kind) (*lexer.Token, *source.SourceError) {
 	tok := p.current();
 
 	if tok.Kind == kind {
@@ -292,18 +291,18 @@ func (p *parser) expect(kind lexer.Kind) (*lexer.Token, *source.SyntaxError) {
 		return tok, nil;
 	}
 
-	return nil, &source.SyntaxError{
+	return nil, &source.SourceError{
 		Pos: tok.Pos,
-		Message: fmt.Sprintf("expected %q, found %q", kind, tok.Kind),
+		Message: fmt.Sprintf("expected '%v', found '%v'", kind, tok.Kind),
 	};
 }
 
-func (p *parser) unexpected() *source.SyntaxError {
+func (p *parser) unexpected() *source.SourceError {
 	tok := p.current();
 
-	return &source.SyntaxError{
+	return &source.SourceError{
 		Pos: tok.Pos,
-		Message: fmt.Sprintf("unexpected %q", tok.Kind),
+		Message: fmt.Sprintf("unexpected '%v'", tok.Kind),
 	}
 }
 

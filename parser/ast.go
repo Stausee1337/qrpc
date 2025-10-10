@@ -18,7 +18,7 @@ func makeIdent(tok *lexer.Token) Ident {
 	}
 
 	return Ident{
-		Symbol: GetSymbol(tok.Value),
+		Symbol: InternSymbol(tok.Value),
 		Pos: tok.Pos,
 	}
 }
@@ -37,6 +37,7 @@ func (t *TOptional) isType() {}
 
 type TRef struct {
 	Name Ident
+	Res  any
 }
 
 type TArray struct {
@@ -78,8 +79,8 @@ type Field struct {
 }
 
 type IService struct {
-	Name Ident
-
+	Name 		Ident
+	Operations 	[]Operation
 }
 
 type OperationKind int
@@ -94,7 +95,7 @@ type Operation struct {
 	Kind 		OperationKind
 	Name 		Ident
 	Inputs		[]NamedInput
-	ResultType	*Type
+	ResultType	Type
 }
 
 type NamedInput struct {

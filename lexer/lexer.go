@@ -15,7 +15,7 @@ type lexer struct {
 	lineno uint
 }
 
-func LexToStream(s string, file string) ([]Token, *source.SyntaxError) {
+func LexToStream(s string, file string) ([]Token, *source.SourceError) {
 	l := lexer{source: s, file: file, lineno: 1}
 
 	slice := make([]Token, 0)
@@ -23,9 +23,9 @@ func LexToStream(s string, file string) ([]Token, *source.SyntaxError) {
 		tok := l.lex()
 		// fmt.Printf("%v, %v\n", l.end, uint(len(l.source)));
 		if tok.Kind == Invalid {
-			return nil, &source.SyntaxError {
+			return nil, &source.SourceError {
 				Pos: tok.Pos,
-				Message: fmt.Sprintf("unexpected character %v",  tok.Value),
+				Message: fmt.Sprintf("unexpected character '%v'", tok.Value),
 			}
 		}
 		slice = append(slice, tok)

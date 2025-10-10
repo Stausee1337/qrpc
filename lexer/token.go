@@ -33,43 +33,43 @@ const (
 func (k Kind) String() string {
 	switch k {
 	case Invalid:
-		return "Invalid"
+		return "<error>"
 	case EOF:
-		return "EOF"
+		return "<eof>"
 	case LParen:
-		return "LParen"
+		return "("
 	case RParen:
-		return "RParen"
+		return ")"
 	case LBracket:
-		return "LBracket"
+		return "["
 	case RBracket:
-		return "RBracket"
+		return "]"
 	case LBrace:
-		return "LBrace"
+		return "{"
 	case RBrace:
-		return "RBrace"
+		return "}"
 	case Colon:
-		return "Colon"
+		return ":"
 	case Comma:
-		return "Comma"
+		return ","
 	case Semicolon:
-		return "Semicolon"
+		return ":"
 	case Question:
-		return "Question"
+		return "?"
 	case VBar:
-		return "VBar"
+		return "|"
 	case Ident:
-		return "Ident"
+		return "<name>"
 	case KeywordEnum:
-		return "KeywordEnum"
+		return "enum"
 	case KeywordRecord:
-		return "KeywordRecord"
+		return "record"
 	case KeywordService:
-		return "KeywordService"
+		return "service"
 	case KeywordQuery:
-		return "KeywordQuery"
+		return "query"
 	case KeywordMutation:
-		return "KeywordMutation"
+		return "mutation"
 	}
 	panic("unreachable")
 }
