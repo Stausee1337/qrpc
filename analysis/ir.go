@@ -4,7 +4,7 @@ import (
 	"github.com/stausee1337/qrpc/parser"
 )
 
-type Type interface{ isIRType() }
+type Type interface{ IsIRType() }
 type UserDefinedType interface{
 	Type
 	isUDType()
@@ -21,44 +21,44 @@ type NumberKind string
 type NumberType struct {
 	Kind NumberKind
 }
-func (*NumberType) isIRType() {}
+func (*NumberType) IsIRType() {}
 
 type AnyType struct { }
-func (*AnyType) isIRType() {}
+func (*AnyType) IsIRType() {}
 
 type BoolType struct { }
-func (*BoolType) isIRType() {}
+func (*BoolType) IsIRType() {}
 
 type EmptyType struct { }
-func (*EmptyType) isIRType() {}
+func (*EmptyType) IsIRType() {}
 
 type StringType struct { }
-func (*StringType) isIRType() {}
+func (*StringType) IsIRType() {}
 
 type UUIDType struct { }
-func (*UUIDType) isIRType() {}
+func (*UUIDType) IsIRType() {}
 
 type ArrayType struct {
 	Type Type
 }
-func (*ArrayType) isIRType() {}
+func (*ArrayType) IsIRType() {}
 
 type UnionType struct {
 	Types []Type
 }
-func (*UnionType) isIRType() {}
+func (*UnionType) IsIRType() {}
 
 type OptionalType struct {
 	Type Type
 }
-func (*OptionalType) isIRType() {}
+func (*OptionalType) IsIRType() {}
 
 type EnumType struct {
 	Name     parser.Symbol
 	Variants []parser.Symbol
 }
 
-func (*EnumType) isIRType() {}
+func (*EnumType) IsIRType() {}
 func (*EnumType) isUDType() {}
 
 type RecordType struct {
@@ -66,7 +66,7 @@ type RecordType struct {
 	Fields []NamedType
 }
 
-func (*RecordType) isIRType() {}
+func (*RecordType) IsIRType() {}
 func (*RecordType) isUDType() {}
 
 type NamedType struct {
