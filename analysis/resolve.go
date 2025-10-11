@@ -42,8 +42,15 @@ func (r *resolver) collectAllDefinitions(items []parser.Item) *source.SourceErro
 			sym = v.Name.Symbol
 		case *parser.IRecord:
 			sym = v.Name.Symbol
-		case *parser.IService:
+		default:
 			continue;
+		}
+
+		if sym.IsPrimitive() {
+			return &source.SourceError{
+				Pos: item.Pos,
+				Message: fmt.Sprintf("type '%v' shadows primitive of same name", sym),
+			}
 		}
 
 		_, hasUDT := r.types[sym]
@@ -53,7 +60,6 @@ func (r *resolver) collectAllDefinitions(items []parser.Item) *source.SourceErro
 				Message: fmt.Sprintf("redifinition of type '%v'", sym),
 			}
 		}
-		// TODO: check if type tries to override a builtin type
 
 		r.types[sym] = item
 	}

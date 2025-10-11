@@ -83,7 +83,8 @@ func checkServiceWellFormed(service *parser.IService, pos *source.Position) (*so
 	}
 
  	opMap := map[parser.Symbol]bool{}
-	for _, op := range service.Operations {
+	for idx := range service.Operations {
+		op := &service.Operations[idx]
 		_, hasOp := opMap[op.Name.Symbol]
 		if hasOp {
 			return &source.SourceError{
@@ -93,15 +94,8 @@ func checkServiceWellFormed(service *parser.IService, pos *source.Position) (*so
 		}
 		opMap[op.Name.Symbol] = true
 
-		if op.Kind != parser.OperationMutation {
-			continue;
-		}
-
-		if len(op.Inputs) == 0 {
-			return &source.SourceError{
-				Pos: op.Name.Pos,
-				Message: fmt.Sprintf("mutation '%v' in service '%v' must have at least one input", op.Name.Symbol, service.Name.Symbol),
-			}
+		if err := checkOperationWellFormed(op, service.Name.Symbol); err != nil {
+			return err;
 		}
 	}
 
@@ -109,4 +103,37 @@ func checkServiceWellFormed(service *parser.IService, pos *source.Position) (*so
 
 }
 
+func checkOperationWellFormed(op *parser.Operation, serviceSymbol parser.Symbol) *source.SourceError {
+
+ 	inputMap := map[parser.Symbol]bool{}
+	for idx := range op.Inputs {
+		input := &op.Inputs[idx]
+		_, hasInput := inputMap[input.Name.Symbol]
+		if hasInput {
+			return &source.SourceError{
+				Pos: input.Name.Pos,
+				Message: fmt.Sprintf(
+					"input '%v' appears multiple times in operation '%v.%v'",
+					input.Name.Symbol,
+					serviceSymbol,
+					op.Name.Symbol,
+				),
+			}
+		}
+		inputMap[input.Name.Symbol] = true
+	}
+
+	if op.Kind != parser.OperationMutation {
+		return nil;
+	}
+
+	if len(op.Inputs) == 0 {
+		return &source.SourceError{
+			Pos: op.Name.Pos,
+			Message: fmt.Sprintf("mutation '%v' in service '%v' must have at least one input", op.Name.Symbol, serviceSymbol),
+		}
+	}
+
+	return nil;
+}
 

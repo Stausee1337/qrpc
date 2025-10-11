@@ -4,6 +4,7 @@ type Symbol uint
 
 const (
 	SYMstring Symbol = iota
+	SYMany
 	SYMbool
 	SYMempty
 	SYMfloat
@@ -52,11 +53,13 @@ var symbolCache indexSet
 func init() {
 	symbolCache = createIndexSet(
 		"string",
+		"any",
 		"bool",
 		"empty",
 		"float",
 		"int",
 		"uint",
+		"UUID",
 	)
 }
 

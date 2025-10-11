@@ -15,6 +15,7 @@ func AnalyseSyntaxItems(items []parser.Item) (AnalysisResult, *source.SourceErro
 		return AnalysisResult{}, err;
 	}
 
-	return AnalysisResult{}, nil;
+	checker := makeTypechecker()
+	return checker.analyze(items)
 }
 

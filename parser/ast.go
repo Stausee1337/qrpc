@@ -57,11 +57,19 @@ type Item struct {
 	Data I
 }
 
-type I interface { isItem() }
+type I interface {
+	GetName() *Ident
+}
 
-func (i *IEnum) isItem() {}
-func (i *IRecord) isItem() {}
-func (i *IService) isItem() {}
+func (i *IEnum) GetName() *Ident {
+	return &i.Name;
+}
+func (i *IRecord) GetName() *Ident {
+	return &i.Name;
+}
+func (i *IService) GetName() *Ident {
+	return &i.Name;
+}
 
 type IEnum struct {
 	Name 	 Ident
