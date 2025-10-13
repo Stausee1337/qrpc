@@ -43,7 +43,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
 			if s.logger != nil {
-				s.logger.Error("%w", err)
+				aerr, ok := err.(error)
+				if ok {
+					s.logger.Error(aerr.Error())
+				} else {
+					s.logger.Error(fmt.Sprintf("%v", err))
+				}
 			}
 			writeError(w, http.StatusInternalServerError)
 		}
@@ -51,7 +56,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 
 	params := parseParams(r)
-	fmt.Printf("%v\n", params)
 	if params == nil {
 		writeError(w, http.StatusBadRequest)
 		return
@@ -93,7 +97,6 @@ func parseParams(r *http.Request) *operationParams {
 	if err != nil || match == nil {
 		return nil;
 	}
-	fmt.Printf("%v\n", match)
 
 	kindGroup := match.GroupByName("kind")
 	serviceGroup := match.GroupByName("service")
@@ -127,6 +130,8 @@ func unmarshalRequestHelper(r *http.Request, a any) error {
 	switch err.(type) {
 	case *json.SyntaxError, *json.UnmarshalTypeError:
 		return err
+	case nil:
+		return nil
 	default:
 		panic(err)
 	}
