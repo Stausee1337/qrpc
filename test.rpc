@@ -34,6 +34,6 @@ service script {
     query scripts(): Script[];
     query script(uuid: UUID): Script;
     mutation commitScores(data: CommitScoreData): empty;
-    mutation renameScript(name: string): empty;
+    mutation renameScript(uuid: UUID, name: string): empty;
 }
 
