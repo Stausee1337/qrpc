@@ -93,6 +93,7 @@ func parseParams(r *http.Request) *operationParams {
 	if err != nil || match == nil {
 		return nil;
 	}
+	fmt.Printf("%v\n", match)
 
 	kindGroup := match.GroupByName("kind")
 	serviceGroup := match.GroupByName("service")
