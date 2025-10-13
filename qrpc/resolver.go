@@ -26,7 +26,7 @@ func (r *errorResponse)	rawData() map[string]any {
 	};
 }
 
-func ErrorData(error error) Response {
+func WrapError(error error) Response {
 	return &errorResponse{ error: error }
 }
 

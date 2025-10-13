@@ -163,11 +163,17 @@ func writeError(w http.ResponseWriter, statusCode int) {
 }
 
 func writeResponse(w http.ResponseWriter, response Response) {
-	x, err := json.Marshal(response.rawData())
-	if err != nil {
-		panic(err)
+	var data []byte
+	if response != nil {
+		var err error
+		data, err = json.Marshal(response.rawData())
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		data = []byte("{}")
 	}
 
 	w.WriteHeader(200)
-	w.Write(x)
+	w.Write(data)
 }
