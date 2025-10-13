@@ -3,6 +3,7 @@ package qrpc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -50,6 +51,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 
 	params := parseParams(r)
+	fmt.Printf("%v\n", params)
 	if params == nil {
 		writeError(w, http.StatusBadRequest)
 		return
@@ -88,7 +90,7 @@ func parseParams(r *http.Request) *operationParams {
 	querySegment := segments[len(segments) - 1]
 
 	match, err := opRegex.FindStringMatch(querySegment)
-	if err != nil {
+	if err != nil || match == nil {
 		return nil;
 	}
 
