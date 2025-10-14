@@ -1,39 +1,55 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/stausee1337/qrpc/analysis"
+	"github.com/stausee1337/qrpc/codegen"
 	"github.com/stausee1337/qrpc/lexer"
 	"github.com/stausee1337/qrpc/parser"
+	"github.com/stausee1337/qrpc/source"
 )
 
 func main() {
-	filename := "test.rpc"
+	files := os.Args[1:]
+	analysis, ok := analyzeFilesHandleError(files)
+	if !ok {
+		os.Exit(1)
+	}
+	codegen.CodegenFromAnalysis(analysis, "./qmodel")
+}
 
-	dat, err := os.ReadFile(filename)
-	if err != nil {
-		panic(err)
+func analyzeFilesHandleError(files []string) (analysis.AnalysisResult, bool) {
+	items := make([]parser.Item, 0)
+
+	for _, filename := range files {
+		dat, err := os.ReadFile(filename)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Could not read file: %v\n", err.Error())
+			return analysis.AnalysisResult{}, false
+		}
+
+		contents := string(dat)
+		stream, serr := lexer.LexToStream(contents, filename)
+		if serr != nil {
+			source.RenderSourceError(serr)
+			return analysis.AnalysisResult{}, false
+		}
+
+		fileItems, serr := parser.ParseTokenStream(stream)
+		if serr != nil {
+			source.RenderSourceError(serr)
+			return analysis.AnalysisResult{}, false
+		}
+		items = append(items, fileItems...)
 	}
 
-	contents := string(dat)
-	stream, serr := lexer.LexToStream(contents, filename)
+	res, serr := analysis.AnalyseSyntaxItems(items)
 	if serr != nil {
-		panic(serr)
+		source.RenderSourceError(serr)
+		return analysis.AnalysisResult{}, false
 	}
 
-	// for _, tok := range stream {
-	// 	fmt.Printf("%v\n", tok.String());
-	// }
-
-	items, serr := parser.ParseTokenStream(stream)
-	if serr != nil {
-		panic(serr)
-	}
-
-	_, serr = analysis.AnalyseSyntaxItems(items)
-	if serr != nil {
-		panic(serr)
-	}
-
+	return res, true
 }
