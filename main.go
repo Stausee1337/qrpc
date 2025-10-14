@@ -17,7 +17,16 @@ func main() {
 	if !ok {
 		os.Exit(1)
 	}
-	codegen.CodegenFromAnalysis(analysis, "./qmodel")
+	err := codegen.CodegenFromAnalysis(
+		analysis,
+		codegen.Options{
+			OutDir: "./qmodel",
+			PackageName: "qmodel",	
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func analyzeFilesHandleError(files []string) (analysis.AnalysisResult, bool) {
