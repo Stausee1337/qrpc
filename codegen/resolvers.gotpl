@@ -1,0 +1,43 @@
+{{- define "resolverWithInput" -}}
+{{ template "generateStruct" . }}
+return qrpc.MakeInputHandler(func(ctx context.Context, args input) qrpc.Response {
+{{ if .HasOutput -}}
+    data, err := p.{{ go .Name.String }}(ctx,
+    {{- range $input := .InputTypes -}}
+        args.{{ go $input.Name.String }},
+    {{- end -}}
+{{- else -}}
+    err := p.{{ go .Name.String }}(ctx,
+    {{- range $input := .InputTypes -}}
+        args.{{ go $input.Name.String }},
+    {{- end -}}
+{{- end -}}
+    )
+    if err != nil {
+        return qrpc.WrapError(err)
+    }
+{{ if .HasOutput }}
+    return qrpc.WrapData(data)
+{{ else }}
+    return nil
+{{- end }}
+})
+{{- end -}}
+{{- define "resolverNoInput" -}}
+return qrpc.MakeHandler(func(ctx context.Context) qrpc.Response {
+{{ if .HasOutput -}}
+    data, err := p.{{ go .Name.String }}(ctx)
+{{- else -}}
+    err := p.{{ go .Name.String }}(ctx)
+{{- end }}
+    if err != nil {
+        return qrpc.WrapError(err)
+    }
+{{ if .HasOutput }}
+    return qrpc.WrapData(data)
+{{- else }}
+    return nil
+{{- end }}
+})
+{{- end -}}
+

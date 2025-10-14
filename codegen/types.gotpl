@@ -1,0 +1,7 @@
+{{- define "generateStruct" -}}
+type {{ typeName . }} struct {
+{{ range $field := typeFields . -}}
+    {{ go $field.Name.String }} {{ $field.Type.GoTypeRepr }} {{ printf "`json:%q`" $field.Name.String }}
+{{ end -}}
+}
+{{- end -}}

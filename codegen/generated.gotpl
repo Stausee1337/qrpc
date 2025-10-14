@@ -1,0 +1,60 @@
+package main
+
+{{ range $service := .Services -}}
+    {{ if $service.HasQueries }}
+        type {{ serviceQueries $service }} interface {
+        {{ range $op := $service.Operations -}}
+            {{ if $op.IsQuery }}
+                {{ $op.GoName }}(ctx context.Context,{{ $op.GoInputs }}) ({{ $op.GoOutputs }})
+            {{- end }}
+        {{- end }}
+        }
+    {{- end }}
+    {{ if $service.HasMutations }}
+        type {{ serviceMutations $service }} interface {
+        {{ range $op := $service.Operations -}}
+            {{ if not $op.IsQuery }}
+                {{ $op.GoName }}(ctx context.Context,{{ $op.GoInputs }}) ({{ $op.GoOutputs }})
+            {{- end }}
+        {{- end }}
+        }
+    {{- end }}
+
+    {{ if $service.HasQueries }}
+    func {{ resolveQueries $service }}(p {{ serviceQueries $service -}}, query string) http.Handler {
+        switch query {
+        {{ range $op := $service.Operations -}}
+            {{ if $op.IsQuery }}
+        case {{ printf "%q" $op.RealName }}:
+            {{ if $op.HasInputs -}}
+            {{ template "resolverWithInput" $op }}
+            {{- else -}}
+            {{ template "resolverNoInput" $op }}
+            {{- end -}}
+            {{- end }}
+        {{- end }}
+        default:
+            return nil
+        }
+    }
+    {{- end }}
+    {{ if $service.HasMutations }}
+    func {{ resolveMutations $service }}(p {{ serviceMutations $service -}}, mutation string) http.Handler {
+        switch mutation {
+        {{ range $op := $service.Operations -}}
+            {{ if not $op.IsQuery }}
+        case {{ printf "%q" $op.RealName }}:
+            {{ if $op.HasInputs -}}
+            {{ template "resolverWithInput" $op }}
+            {{- else -}}
+            {{ template "resolverNoInput" $op }}
+            {{- end -}}
+            {{- end }}
+        {{- end }}
+        default:
+            return nil
+        }
+    }
+    {{- end }}
+{{- end }}
+
