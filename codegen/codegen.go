@@ -30,6 +30,10 @@ func CodegenFromAnalysis(analysis analysis.AnalysisResult, options Options) erro
 		return err
 	}
 
+	if err = options.generateAndEmit(&t, "models"); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -78,10 +82,13 @@ package %v
 			"github.com/stausee1337/qrpc/qrpc",
 		)
 
-		if requiresUUID(analysis) {
+		if serviceRequiresUUID(analysis.Services) {
 			addImports(&imports, "github.com/google/uuid")
 		}
 	case "models":
+		if udTypeRequiresUUID(analysis.Types) {
+			addImports(&imports, "github.com/google/uuid")
+		}
 	default:
 		panic("invalid key in model")
 	}
@@ -96,9 +103,8 @@ func addImports(imports *[]string, paths...string) {
 	}
 }
 
-func requiresUUID(analysis *analysis.AnalysisResult) bool {
-
-	for _, service := range analysis.Services {
+func serviceRequiresUUID(services []analysis.Service) bool {
+	for _, service := range services {
 		for _, operation := range service.Operations {
 			for _, ty := range operation.InputTypes {
 				if checkUUIDDeeply(ty.Type) {
@@ -106,6 +112,22 @@ func requiresUUID(analysis *analysis.AnalysisResult) bool {
 				}
 			}
 			if checkUUIDDeeply(operation.ResultType) {
+				return true;
+			}
+		}
+	}
+
+	return false
+}
+
+func udTypeRequiresUUID(udts []analysis.UserDefinedType) bool {
+	for _, udt := range udts {
+		record, ok := udt.(*analysis.RecordType)
+		if !ok {
+			continue
+		}
+		for _, ty := range record.Fields {
+			if checkUUIDDeeply(ty.Type) {
 				return true;
 			}
 		}

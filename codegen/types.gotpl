@@ -5,3 +5,14 @@ type {{ typeName . }} struct {
 {{ end -}}
 }
 {{- end -}}
+{{- define "generateEnum" -}}
+{{ $enumName := typeName . }}
+type {{ $enumName }} string
+
+const (
+{{ range $variant := .Variants -}}
+    {{- printf "%v%v " $enumName (go $variant.String)  -}}
+    {{- $enumName -}} = {{- printf " %q\n" $variant.String -}}
+{{ end -}}
+)
+{{- end -}}

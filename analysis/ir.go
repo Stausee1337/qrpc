@@ -14,7 +14,7 @@ type Type interface{
 }
 type UserDefinedType interface{
 	Type
-	isUDType()
+	IsStruct() bool
 }
 
 const (
@@ -102,7 +102,7 @@ type EnumType struct {
 }
 
 func (*EnumType) IsIRType() {}
-func (*EnumType) isUDType() {}
+func (*EnumType) IsStruct() bool { return false; }
 func (o *EnumType) GoTypeRepr() string {
 	return source.ToPascalCase(o.Name.String())
 }
@@ -113,7 +113,7 @@ type RecordType struct {
 }
 
 func (*RecordType) IsIRType() {}
-func (*RecordType) isUDType() {}
+func (*RecordType) IsStruct() bool { return true; }
 func (o *RecordType) GoTypeRepr() string {
 	return source.ToPascalCase(o.Name.String())
 }

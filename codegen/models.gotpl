@@ -1,0 +1,8 @@
+{{ range $ty := .Types -}}
+{{ if $ty.IsStruct }}
+{{ template "generateStruct" $ty }}
+{{ else }}
+{{ template "generateEnum" $ty }}
+{{ end }}
+{{- end }}
+

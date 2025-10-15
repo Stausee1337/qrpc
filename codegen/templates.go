@@ -18,9 +18,9 @@ func generateTypeName(ty any) string {
 	switch v := ty.(type) {
 	case analysis.Operation:
 		return "input"
-	case analysis.RecordType:
+	case *analysis.RecordType:
 		return source.ToPascalCase(v.Name.String())
-	case analysis.EnumType:
+	case *analysis.EnumType:
 		return source.ToPascalCase(v.Name.String())
 	default:
 		panic("unknown thing in generateTypeName")
@@ -31,7 +31,7 @@ func getTypeFields(ty any) []analysis.NamedType {
 	switch v := ty.(type) {
 	case analysis.Operation:
 		return v.InputTypes
-	case analysis.RecordType:
+	case *analysis.RecordType:
 		return v.Fields
 	default:
 		panic("unknown thing in getTypeFields")
