@@ -15,31 +15,33 @@ import (
 
 
 func test(this js.Value, args []js.Value) any {
-	contents := args[0].String()
-	filename := args[1].String()
+	files := args[0]
 
-	stream, serr := lexer.LexToStream(contents, filename)
-	if serr != nil {
-		panic(serr)
-	}
+	items := make([]parser.Item, 0)
+	for i := 0; i < files.Length(); i++ {
+		fileDesc := files.Index(i)
+		contents, filename := fileDesc.Get("contents").String(), fileDesc.Get("filename").String()
 
-	// for _, tok := range stream {
-	// 	fmt.Printf("%v\n", tok.String());
-	// }
+		stream, serr := lexer.LexToStream(contents, filename)
+		if serr != nil {
+			return convertAny(serr)
+		}
 
-	items, serr := parser.ParseTokenStream(stream)
-	if serr != nil {
-		panic(serr)
+		fileItems, serr := parser.ParseTokenStream(stream)
+		if serr != nil {
+			return convertAny(serr)
+		}
+
+		items = append(items, fileItems...)
 	}
 
 	result, serr := analysis.AnalyseSyntaxItems(items)
 	if serr != nil {
-		panic(serr)
+		return convertAny(serr)
 	}	
 
 	return convertAny(result);
 }
-
 
 func convertAny(x any) js.Value {
 	switch x := x.(type) {
@@ -89,6 +91,11 @@ func convertAny(x any) js.Value {
 var globalObject = js.Global()
 var objectConstructor = globalObject.Get("Object")
 var arrayConstructor = globalObject.Get("Array")
+var constructors = globalObject.Get("constructors")
+
+func constructObject(ty string) js.Value {
+	return constructors.Get(ty).New()
+}
 
 var typeCache = map[unsafe.Pointer]js.Value{}
 
@@ -128,7 +135,8 @@ func convertObjectRecursively(obj any) js.Value {
 		if ok {
 			return result;
 		}
-		result = objectConstructor.New()
+
+		result = constructObject(val.Type().Name())
 
 		// Loop through fields
 		for i := 0; i < val.NumField(); i++ {
@@ -138,7 +146,7 @@ func convertObjectRecursively(obj any) js.Value {
 			result.Set(firstToLower(fieldType.Name), convertAny(field.Interface()))
 		}
 
-		result.Set("rawType", val.Type().Name())
+		// result.Set("rawType", val.Type().Name())
 
 		typeCache[iface] = result
 		return result
