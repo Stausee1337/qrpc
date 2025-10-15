@@ -162,7 +162,7 @@ func (o *Operation) GoName() string {
 }
 
 func (o *Operation) IsQuery() bool {
-	return o.Kind == parser.OperationMutation
+	return o.Kind == parser.OperationQuery
 }
 
 func (o *Operation) GoInputs() string {
