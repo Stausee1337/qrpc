@@ -19,10 +19,29 @@
         }
     {{- end }}
 
+func {{ printf "Create%vService" (go $service.Name.String) }}(
+{{- if $service.HasQueries -}}
+queries {{ serviceQueries $service }},
+{{- end -}}
+{{- if $service.HasMutations -}}
+mutations {{ serviceMutations $service }}
+{{- end -}}
+) *qrpc.Service {
+    return qrpc.NewService(
+        {{ printf "%q" $service.Name.String }},
+        {{- if $service.HasQueries }}
+        qrpc.BindResolver(qrpc.OpQuery, queries, {{ resolveQueries $service }}),
+        {{- end -}}
+        {{- if $service.HasMutations }}
+        qrpc.BindResolver(qrpc.OpMutation, mutations, {{ resolveMutations $service }}),
+        {{ end }}
+    )
+}
+
     {{ if $service.HasQueries }}
     func {{ resolveQueries $service }}(p {{ serviceQueries $service -}}, query string) http.Handler {
         switch query {
-        {{ range $op := $service.Operations -}}
+        {{- range $op := $service.Operations -}}
             {{ if $op.IsQuery }}
         case {{ printf "%q" $op.RealName }}:
             {{ if $op.HasInputs -}}
@@ -40,7 +59,7 @@
     {{ if $service.HasMutations }}
     func {{ resolveMutations $service }}(p {{ serviceMutations $service -}}, mutation string) http.Handler {
         switch mutation {
-        {{ range $op := $service.Operations -}}
+        {{- range $op := $service.Operations -}}
             {{ if not $op.IsQuery }}
         case {{ printf "%q" $op.RealName }}:
             {{ if $op.HasInputs -}}
