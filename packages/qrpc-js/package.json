@@ -1,0 +1,17 @@
+{
+  "name": "qrpc-js",
+  "version": "0.1.0",
+  "description": "Cross-Stack Remote Procedure Calls via HTTP and JSON",
+  "homepage": "https://github.com/Stausee1337/qrpc/blob/trunk/packages/schema#readme",
+  "license": "MIT",
+  "author": "Simon König",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "types": "tsc"
+  },
+  "devDependencies": {}
+}

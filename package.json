@@ -1,6 +1,6 @@
 {
   "name": "qrpc",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Cross-Stack Remote Procedure Calls via HTTP and JSON",
   "keywords": [
     "rpc",
@@ -22,7 +22,8 @@
   "type": "module",
   "scripts": {},
   "workspaces": [
-    "packages/qrpc-gen"
+    "packages/qrpc-gen",
+    "packages/qrpc-js"
   ],
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.4",
