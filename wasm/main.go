@@ -13,8 +13,15 @@ import (
 	"github.com/stausee1337/qrpc/parser"
 )
 
+func goInit(this js.Value, args []js.Value) any {
+	constructors = args[0]
 
-func test(this js.Value, args []js.Value) any {
+	exports := objectConstructor.New()
+	exports.Set("analyzeSourceFiles", js.FuncOf(analyzeSourceFiles))
+	return exports
+}
+
+func analyzeSourceFiles(this js.Value, args []js.Value) any {
 	files := args[0]
 
 	items := make([]parser.Item, 0)
@@ -91,7 +98,7 @@ func convertAny(x any) js.Value {
 var globalObject = js.Global()
 var objectConstructor = globalObject.Get("Object")
 var arrayConstructor = globalObject.Get("Array")
-var constructors = globalObject.Get("constructors")
+var constructors js.Value
 
 func constructObject(ty string) js.Value {
 	return constructors.Get(ty).New()
@@ -174,7 +181,7 @@ func convertObjectRecursively(obj any) js.Value {
 
 func main() {
     c := make(chan struct{})
-	js.Global().Set("test", js.FuncOf(test))
+	js.Global().Set("$goInit", js.FuncOf(goInit))
 	<-c
 }
 
