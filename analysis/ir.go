@@ -79,7 +79,7 @@ func (u *UnionType) GoTypeRepr() string {
 	for idx, ty := range u.Types {
 		variants = append(
 			variants,
-			fmt.Sprintf("Variant%v *%v `json:\"variant%v\"`", idx + 1, ty.GoTypeRepr(), idx + 1),
+			fmt.Sprintf("Variant%v *%v `json:\"variant%v,omitempty\"`", idx + 1, ty.GoTypeRepr(), idx + 1),
 		)
 	}
 	return fmt.Sprintf(

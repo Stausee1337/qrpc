@@ -7,5 +7,6 @@ export interface QSchema<T> {
 export type TypeOf<T> = T extends QSchema<(infer U)> ? U : never;
 
 export * from './primitives.js'
+export * from './generics.js'
 export * from './user-defined.js'
 

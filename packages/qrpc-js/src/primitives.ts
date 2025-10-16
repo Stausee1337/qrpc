@@ -36,16 +36,23 @@ export const String = createQPrimitive<string>(
     }
 )
 
-export const UUID = createQPrimitive<string>(
+declare const brand: unique symbol;
+type UUID = string & { [brand]: UUID };
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const UUID = createQPrimitive<UUID>(
     {
-        isPrimitive(value) {
-            return typeof value === "string";
+        isPrimitive(value): value is UUID {
+            if (typeof value !== "string")
+                return false;
+            return UUID_REGEX.test(value);
         },
         parse(value) {
-            if (typeof value !== "string")
-                throw `expected UUID, found ${typeof value}`
-            
-            return value;
+            if (this.isPrimitive(value))
+                return value;
+            throw `expected UUID, found ${typeof value}`   
         },
     }
 )
