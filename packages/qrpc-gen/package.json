@@ -1,0 +1,19 @@
+{
+  "name": "qrpc-gen",
+  "version": "0.1.0",
+  "description": "Generate .ts Schemas from .qrpc Files",
+  "homepage": "https://github.com/Stausee1337/qrpc/blob/trunk/packages/qrpc-gen#readme",
+  "license": "MIT",
+  "author": "Simon König",
+  "type": "module",
+  "main": "./dist/main.js",
+  "module": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "types": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2"
+  }
+}

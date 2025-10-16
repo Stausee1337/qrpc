@@ -1,0 +1,31 @@
+{
+  "name": "qrpc",
+  "version": "0.1.0",
+  "description": "Cross Stack Remote Procedure Calls via HTTP and JSON",
+  "keywords": [
+    "rpc",
+    "quipt",
+    "json",
+    "http"
+  ],
+  "homepage": "https://github.com/Stausee1337/qrpc#readme",
+  "bugs": {
+    "url": "https://github.com/Stausee1337/qrpc/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Stausee1337/qrpc.git"
+  },
+  "private": true,
+  "license": "MIT",
+  "author": "Simon König",
+  "type": "module",
+  "scripts": {},
+  "workspaces": [
+    "packages/qrpc-gen"
+  ],
+  "devDependencies": {
+    "rollup": "^4.52.4",
+    "typescript": "~5.9.3"
+  }
+}
