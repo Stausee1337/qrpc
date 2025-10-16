@@ -28,6 +28,12 @@ export class NumberType implements IRType {
     }
 }
 
+export class BoolType implements IRType {
+    formatSchema(): string {
+        return '$s.Boolean'
+    }
+}
+
 export class StringType implements IRType {
     formatSchema(): string {
         return '$s.String'
@@ -82,9 +88,8 @@ export class Service {
     operations: Operation[] = []
 }
 
-
 function isNumberLike(val: unknown): val is Number {
-  return val !== '' && !isNaN(val);
+    return val !== '' && !isNaN(val as number);
 }
 
 type OperationKind = "mutation"|"query"
@@ -101,7 +106,7 @@ export class Operation {
 
     set kind(kind: OperationKind|Number) {
         if (isNumberLike(kind))
-            this.#kind = (["query", "mutation"] as const)[kind]
+            this.#kind = (["query", "mutation"] as const)[kind as (0|1)]
         else
             this.#kind = kind;
     }
@@ -116,4 +121,24 @@ export class AnalysisResult {
     types: UserDefinedType[] = []
     services: Service[] = []
 }
+
+export class Position {
+    start: number = 0
+    end: number = 0
+    lineno: number = 1
+    column: number = 1
+    file: string = ''
+}
+
+export class SourceError {
+    pos: Position = new Position()
+    message: string = ''
+
+    renderToConsole() {
+        console.error(
+            `ERROR: ${this.pos.file}:${this.pos.lineno}:${this.pos.column}: ${this.message}`
+        )
+    }
+}
+
 

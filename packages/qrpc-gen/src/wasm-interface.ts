@@ -1,7 +1,7 @@
 import './wasm_exec.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import * as constructors from './types.js'
+import * as tys from './types.js'
 
 export type FileDesc = {
     filename: string,
@@ -9,7 +9,7 @@ export type FileDesc = {
 };
 
 export interface Exports {
-    analyzeSourceFiles(files: FileDesc[]): constructors.AnalysisResult;
+    analyzeSourceFiles(files: FileDesc[]): tys.AnalysisResult|tys.SourceError;
 }
 
 export async function loadAndInitGo(): Promise<Exports> {
@@ -21,7 +21,7 @@ export async function loadAndInitGo(): Promise<Exports> {
     const source = await WebAssembly.instantiate(array, go.importObject)
     go.run(source.instance)
 
-    return globalThis.$goInit(constructors)
+    return globalThis.$goInit(tys)
 }
 
 declare namespace globalThis {

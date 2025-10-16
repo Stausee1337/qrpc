@@ -53,7 +53,7 @@ func (k Kind) String() string {
 	case Comma:
 		return ","
 	case Semicolon:
-		return ":"
+		return ";"
 	case Question:
 		return "?"
 	case VBar:

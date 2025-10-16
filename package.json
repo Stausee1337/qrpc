@@ -1,7 +1,7 @@
 {
   "name": "qrpc",
   "version": "0.1.0",
-  "description": "Cross Stack Remote Procedure Calls via HTTP and JSON",
+  "description": "Cross-Stack Remote Procedure Calls via HTTP and JSON",
   "keywords": [
     "rpc",
     "quipt",

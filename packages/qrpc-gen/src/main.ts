@@ -1,21 +1,38 @@
-import fs from 'fs';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { type FileDesc, loadAndInitGo } from './wasm-interface.js'
+import { SourceError } from './types.js';
+
 const { analyzeSourceFiles } = await loadAndInitGo();
 
-function readFile(name: string): FileDesc {
+function isMain(importMetaUrl: string): boolean {
+    return process.argv[1] === fileURLToPath(importMetaUrl)
+}
+
+
+export function genSchemasFromFilesWithConfig() {
+    console.log(process.argv)
+}
+
+function readFileToDesc(name: string): FileDesc {
     return {
         filename: name,
         contents: fs.readFileSync(name, { encoding: 'utf8' })
     };
 }
 
-const res = analyzeSourceFiles(
-    process.argv.slice(2).map(readFile),
-)
-console.dir(res, { depth: 7 })
-
-export function genSchemasFromFilesWithConfig() {
-    console.log(process.argv)
+function main() {
+    const res = analyzeSourceFiles(
+        process.argv.slice(2).map(readFileToDesc),
+    )
+    if (res instanceof SourceError) {
+        res.renderToConsole()
+        process.exit(1)
+    }
+    console.dir(res, { depth: 7 })
 }
 
+if (isMain(import.meta.url)) {
+    main()
+}
 

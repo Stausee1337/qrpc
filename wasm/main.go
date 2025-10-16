@@ -104,7 +104,20 @@ func constructObject(ty string) js.Value {
 	return constructors.Get(ty).New()
 }
 
-var typeCache = map[unsafe.Pointer]js.Value{}
+var udtCache = map[unsafe.Pointer]js.Value{}
+var tyCache = map[string]js.Value{}
+var typeIfaceType = reflect.TypeFor[analysis.Type]()
+
+func getType(val reflect.Value) analysis.Type {
+	v := val
+	if !v.Type().Implements(typeIfaceType) && reflect.PointerTo(v.Type()).Implements(typeIfaceType) {
+		v = v.Addr()
+	} else if !v.Type().Implements(typeIfaceType) {
+		return nil
+	}
+
+	return v.Interface().(analysis.Type)
+}
 
 type eface struct {
     _type unsafe.Pointer
@@ -114,7 +127,6 @@ type eface struct {
 func obtainIfacePointer(x any) unsafe.Pointer {
     return (*eface)(unsafe.Pointer(&x)).data
 }
-
 
 func firstToLower(s string) string {
     r, size := utf8.DecodeRuneInString(s)
@@ -128,6 +140,45 @@ func firstToLower(s string) string {
     return string(lc) + s[size:]
 }
 
+func getCachedOrNew(val reflect.Value) (js.Value, bool) {
+	obj := val.Interface()
+	ty := getType(val)
+
+	if ty != nil {
+		if val.Type().Size() > 0 {
+			iface := obtainIfacePointer(obj)
+			result, cached := udtCache[iface]
+			if cached {
+				return result, true
+			}
+			
+			result = constructObject(val.Type().Name())
+			udtCache[iface] = result
+
+			return result, false
+		} else {
+			result, cached := tyCache[val.Type().Name()]
+			if cached {
+				return result, true
+			}
+			
+			result = constructObject(val.Type().Name())
+			tyCache[val.Type().Name()] = result
+
+			return result, false
+		}
+		// _, isTy := obj.(analysis.Type)
+		// reflect.PointerTo()
+		// isTy := reflect.PointerTo(
+		// 	val.Type(),
+		// ).Implements(reflect.TypeFor[analysis.Type]())
+	}
+
+
+	result := constructObject(val.Type().Name())
+	return result, false
+}
+
 func convertObjectRecursively(obj any) js.Value {
 	val := reflect.ValueOf(obj)
 
@@ -137,13 +188,10 @@ func convertObjectRecursively(obj any) js.Value {
 
 	switch val.Kind() {
 	case reflect.Struct:
-		iface := obtainIfacePointer(obj)
-		result, ok := typeCache[iface]
-		if ok {
+		result, cached := getCachedOrNew(val)
+		if cached {
 			return result;
 		}
-
-		result = constructObject(val.Type().Name())
 
 		// Loop through fields
 		for i := 0; i < val.NumField(); i++ {
@@ -155,11 +203,10 @@ func convertObjectRecursively(obj any) js.Value {
 
 		// result.Set("rawType", val.Type().Name())
 
-		typeCache[iface] = result
 		return result
 	case reflect.Slice:
 		iface := obtainIfacePointer(obj)
-		result, ok := typeCache[iface]
+		result, ok := udtCache[iface]
 		if ok {
 			return result;
 		}
@@ -172,7 +219,7 @@ func convertObjectRecursively(obj any) js.Value {
 	 		result.SetIndex(i, convertAny(field.Interface()))
 	 	}
 
-		typeCache[iface] = result
+		udtCache[iface] = result
 	 	return result
 	default:
 		return js.ValueOf(fmt.Sprintf("%v", val.Interface()))
