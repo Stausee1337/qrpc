@@ -47,6 +47,13 @@ export function Record<T extends Record<string, QSchema<any>>>(
                 throw `expected record ${name}, found ${typeof value}`
             return parsedObject
         },
+        serialize(value) {
+            const object: Record<string, any> = {};
+            for (const [key, schema] of Object.entries(descriptor)) {
+                object[key] = schema.serialize(value[key]);
+            }
+            return object;
+        },
     };
 
     return Object.freeze(schema);
@@ -67,6 +74,9 @@ export function Enum<const T extends readonly string[]>(
             if (this.isSchema(value))
                 return value;
             throw `expected enum ${name}, found ${typeof value}`
+        },
+        serialize(value) {
+            return value;
         },
     };
 

@@ -19,6 +19,9 @@ function createQPrimitive<T>(
         parse(value) {
             return descriptor.parse(value);
         },
+        serialize(value) {
+            return value
+        },
     };
     return Object.freeze(schema);
 }

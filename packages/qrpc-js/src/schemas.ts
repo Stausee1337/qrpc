@@ -2,6 +2,7 @@
 export interface QSchema<T> {
     isSchema(value: unknown): value is T;
     parse(value: unknown): T;
+    serialize(value: T): any;
 }
 
 export type TypeOf<T> = T extends QSchema<(infer U)> ? U : never;

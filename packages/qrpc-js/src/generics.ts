@@ -26,6 +26,13 @@ export function Array<T extends QSchema<any>>(
                 throw `expected array, found ${typeof value}`
             return array;
         },
+        serialize(value) {
+            const result: any[] = [];
+            for (const item of value) {
+                result.push(type.serialize(item))
+            }
+            return result;
+        },
     };
 
     return Object.freeze(schema);
@@ -44,6 +51,9 @@ export function Optional<T extends QSchema<any>>(
             if (value === undefined || value === null)
                 return undefined;
             return type.parse(type);
+        },
+        serialize(value) {
+            return value;
         },
     };
 
@@ -81,6 +91,16 @@ export function Union<T extends QSchema<any>[]>(
             if (parsed !== null)
                 return parsed;
             throw `unexpected ${typeof value}`
+        },
+        serialize(value) {
+            const union: Record<string, any> = {};
+            for (let i = 0; i < types.length; i++) {
+                const schema = types[i];
+                if (!schema.isSchema(value))
+                    continue
+                union[`variant${i + 1}`] = schema.serialize(value)
+            }
+            return union
         },
     };
 
