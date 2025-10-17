@@ -10,6 +10,11 @@ interface Operation<I extends Record<string, QSchema<any>>, R extends QSchema<an
     (input: MapRecord<I>): Promise<TypeOf<R>>;
 }
 
+interface PureOperation<R extends QSchema<any>> {
+    readonly kind: "query";
+    (): Promise<TypeOf<R>>;
+}
+
 interface VoidOperation<I extends Record<string, QSchema<any>>> {
     readonly kind: "mutation";
     (input: MapRecord<I>): Promise<void>;
@@ -57,7 +62,7 @@ function buildOperation<I extends Record<string, QSchema<any>>, R extends QSchem
     const inputSchema = createRecord(`${name}.Inputs`, inputTypes);
     async function executeOp(this: $Service|unknown, input: MapRecord<I>): Promise<TypeOf<R>> {
         if (!(this instanceof $Service))
-            throw ''
+            throw `${kind} ${name} was not executed on a service`
         const rawInput = inputSchema.serialize(input);
         const rawOutput = this.$executeOperation(kind, name, rawInput)
         if (outputSchema === undefined)
@@ -69,12 +74,28 @@ function buildOperation<I extends Record<string, QSchema<any>>, R extends QSchem
     return executeOp;
 }
 
+export function query<R extends QSchema<any>>(
+    name: string,
+    outputSchema: R
+): PureOperation<R>
 export function query<I extends Record<string, QSchema<any>>, R extends QSchema<any>>(
     name: string,
     inputTypes: I,
     outputSchema: R
-): Operation<I, R> {
-    return buildOperation("query", name, inputTypes, outputSchema)
+): Operation<I, R>
+export function query<I extends Record<string, QSchema<any>>, R extends QSchema<any>>(
+    name: string,
+    secondArgument: I|R,
+    outputSchema?: R
+): Operation<I, R>|PureOperation<R> {
+    if (outputSchema !== undefined)
+        return buildOperation("query", name, secondArgument as I, outputSchema)
+    const op = buildOperation("query", name, {}, secondArgument as R)
+    function wrapOp(this: $Service|unknown, input: MapRecord<I>|undefined): Promise<TypeOf<R>> {
+        return op.call(this, input ?? {});
+    }
+    wrapOp.kind = "query" as const;
+    return wrapOp;
 }
 
 export function mutation<I extends Record<string, QSchema<any>>>(
