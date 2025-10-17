@@ -10,7 +10,7 @@ export function Record<T extends Record<string, QSchema<any>>>(
     name: string,
     descriptor: T
 ): QSchema<MapRecord<T>> {
-    const object = new Object();
+    const uniqueInstance = new Object();
 
     function parseOrNull(rawObject: unknown): MapRecord<T>|null {
         if (typeof rawObject !== "object")
@@ -27,7 +27,7 @@ export function Record<T extends Record<string, QSchema<any>>>(
 
         Object.defineProperty(
             object, $type,
-            { enumerable: false, writable: false, value: object }
+            { enumerable: false, writable: false, value: uniqueInstance }
         )
 
         return object as MapRecord<T>;
@@ -39,7 +39,7 @@ export function Record<T extends Record<string, QSchema<any>>>(
                 return false;
             if (value === null)
                 return false;
-            return (value as any)[$type] === object;
+            return (value as any)[$type] === uniqueInstance;
         },
         parse(value) {
             const parsedObject = parseOrNull(value) 

@@ -25,7 +25,7 @@ type Constructor<T> = new(executor: Executor) => T;
 
 function overlayPrototype<T, P>(f: Constructor<T>, p: P): Constructor<T & P> {
     const result: Constructor<T & P> = f as any;
-    result.prototype = Object.assign(result.prototype, p)
+    Object.assign(result.prototype, p)
     return result;
 }
 
@@ -64,7 +64,7 @@ function buildOperation<I extends Record<string, QSchema<any>>, R extends QSchem
         if (!(this instanceof $Service))
             throw `${kind} ${name} was not executed on a service`
         const rawInput = inputSchema.serialize(input);
-        const rawOutput = this.$executeOperation(kind, name, rawInput)
+        const rawOutput = await this.$executeOperation(kind, name, rawInput)
         if (outputSchema === undefined)
             return;
         return outputSchema.parse(rawOutput)
