@@ -1,0 +1,167 @@
+import { IRType, UserDefinedType, RecordType, EnumType, Service, AnalysisResult, Operation, EmptyType } from './types.js'
+import { format } from "prettier";
+
+const $root: unique symbol = Symbol('$root');
+type RootNode = typeof $root;
+type Node = string|RootNode;
+
+function isUDT(ty: IRType): ty is UserDefinedType {
+    return ty instanceof RecordType || ty instanceof EnumType;
+}
+
+function* findDependencies(ty: IRType): Generator<UserDefinedType> {
+    if (isUDT(ty)) {
+        yield ty;
+        return;
+    }
+    for (const child of ty.children)
+        yield* findDependencies(child)
+}
+
+function extendGraph(graph: Map<Node, Set<string>>, node: Node, newDep: string) {
+    let set = graph.get(node)
+    if (set === undefined) {
+        set = new Set<string>();
+        graph.set(node, set);
+    }
+    set.add(newDep);
+}
+
+function depwalk(
+    node: RecordType,
+    graph: Map<Node, Set<string>>
+) {
+
+    const dependencies = node.fields.flatMap(f => Array.from(findDependencies(f.type)))
+    if (dependencies.length === 0)
+        extendGraph(graph, $root, node.name);
+    else
+        for (const dep of dependencies) {
+            extendGraph(graph, dep.name, node.name)
+            if (dep instanceof RecordType)
+                depwalk(dep, graph);
+        }
+}
+
+function detectLevels(
+    currentNode: Node,
+    graph: Map<Node, Set<string>>,
+    levels: Record<string, number>,
+    level: number = 0
+) {
+    const dependents = graph.get(currentNode)
+    if (dependents === undefined)
+        return;
+    for (const dep of dependents) {
+        detectLevels(dep, graph, levels, level + 1); 
+        levels[dep] = Math.max(levels[dep] ?? 0, level);
+    }
+}
+
+const quote: (s: string) => string = JSON.stringify;
+function cap(s: string): string {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function* generateSchema(udt: UserDefinedType): Generator<string> {
+    yield `export const ${udt.name} = `
+    if (udt instanceof RecordType) {
+        const fields = udt.fields
+            .map(nt => `${nt.name}: ${nt.type.formatSchema()}`)
+            .join(', ');
+        yield (
+            `$s.Record(${quote(udt.name)}, { ${fields} });\n`
+        )
+    } else if (udt instanceof EnumType) {
+        const variants = udt.variants.map(quote).join(', ');
+        yield (
+            `$s.Enum(${quote(udt.name)}, ${variants});\n`
+        )
+    } else {
+        throw 'unreachable: unnknown UDT'
+    }
+    yield `export type ${udt.name} = $s.TypeOf<typeof ${udt.name}>\n`
+}
+
+function generateOp(op: Operation): string {
+    let args: string[] = [];
+    if (op.inputTypes.length > 0) {
+        const inputs = op.inputTypes
+            .map(nt => `${nt.name}: ${nt.type.formatSchema()}`)
+            .join(', ');
+        args.push(`{ ${inputs} }`);
+    }
+    if (!(op.resultType instanceof EmptyType))
+        args.push(op.resultType.formatSchema());
+
+    return `$r.${op.kind}(${quote(op.name)}, ${args.join(', ')})`
+}
+
+function generateService(service: Service): string {
+    const body = service.operations
+        .map(op => `${op.name}: ${generateOp(op)}`)
+        .join(', ');
+
+    return (
+        `export const ${cap(service.name)}Service = $r.service(${quote(service.name)}, { ${body} })\n`
+    )
+}
+
+export async function generateCode(res: AnalysisResult): Promise<string> {
+    const graph = new Map<Node, Set<string>>();
+    const typeMap: Record<string, UserDefinedType> = {};
+    for (const ty of res.types) {
+        typeMap[ty.name] = ty;
+        if (ty instanceof RecordType)
+            depwalk(ty, graph)
+        else if (ty instanceof EnumType)
+            extendGraph(graph, $root, ty.name)
+    }
+
+    const levels: Record<string, number> = {};
+    detectLevels($root, graph, levels);
+
+    const orderedTypes = Object
+        .keys(levels)
+        .sort((a, b) => levels[a] - levels[b])
+        .map(name => typeMap[name])
+
+    const body: string[] = [
+        'import { schemas as $s, runtime as $r } from "qrpc-js";\n\n'
+    ];
+    for (const ty of orderedTypes) {
+        body.push(...generateSchema(ty));
+        body.push('\n');
+    }
+    body.push('\n');
+
+    for (const service of res.services) {
+        body.push(generateService(service));
+        body.push('\n');
+    }
+
+    const code = body.join('');
+    const formatted = await format(code, {
+        parser: "typescript",
+        semi: true,
+        singleQuote: true,
+    });
+
+    return formatted;
+}
+
+
+// async function x() {
+// const code = `
+// import { schemas as $s } from 'qrpc-js'
+// 
+// const Script = $s.Record("Script", { uuid: $s.UUID, name: $s.String, createdAt: $s.Number })`
+//     const formatted = await format(code, {
+//         parser: "typescript",
+//         semi: true,
+//         singleQuote: true,
+//     });
+// 
+//     console.log(formatted);
+// }
+

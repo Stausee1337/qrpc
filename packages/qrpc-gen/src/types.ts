@@ -1,40 +1,47 @@
 
 export interface IRType {
     formatSchema(): string;
+    readonly children: IRType[]
 }
 export interface UserDefinedType extends IRType {
     name: string
 }
 
+class SingletonMixin {
+    get children(): IRType[] {
+        return [];
+    }
+}
+
 // Types
-export class UUIDType implements IRType {
+export class UUIDType extends SingletonMixin implements IRType {
     formatSchema(): string {
         return '$s.UUID'
     }
 }
 
 export type NumberKind = "signed"|"unsigned"|"floating";
-export class NumberType implements IRType {
+export class NumberType extends SingletonMixin implements IRType {
     kind: NumberKind = 'floating';
     formatSchema(): string {  
         switch(this.kind) {
             case "signed":
                 return '$s.Int'
             case "unsigned":
-                return '$s.Uint'
+                return '$s.UInt'
             case "floating":
                 return '$s.Number'
         }
     }
 }
 
-export class BoolType implements IRType {
+export class BoolType extends SingletonMixin implements IRType {
     formatSchema(): string {
         return '$s.Boolean'
     }
 }
 
-export class StringType implements IRType {
+export class StringType extends SingletonMixin implements IRType {
     formatSchema(): string {
         return '$s.String'
     }
@@ -43,12 +50,20 @@ export class StringType implements IRType {
 export class ArrayType implements IRType {
     type: IRType = new EmptyType();
 
+    get children(): IRType[] {
+        return [this.type];
+    }
+
     formatSchema(): string {
         return `$s.Array(${this.type.formatSchema()})`
     }
 }
 export class OptionalType implements IRType {
     type: IRType = new EmptyType();
+
+    get children(): IRType[] {
+        return [this.type];
+    }
 
     formatSchema(): string {
         return `$s.Optional(${this.type.formatSchema()})`  
@@ -57,12 +72,16 @@ export class OptionalType implements IRType {
 export class UnionType implements IRType {
     types: IRType[] = [];
 
+    get children(): IRType[] {
+        return this.types;
+    }
+
     formatSchema(): string {
         return `$s.Union(${this.types.map(t => t.formatSchema()).join(', ')})`  
         
     }
 }
-export class EmptyType implements IRType {
+export class EmptyType extends SingletonMixin implements IRType {
     formatSchema(): string {
         throw 'empty type cannot be formatted into schema'
     }
@@ -70,6 +89,11 @@ export class EmptyType implements IRType {
 
 export class EnumType implements UserDefinedType {
     name: string = ''
+    variants: string[] = []
+
+    get children(): IRType[] {
+        return [];
+    }
 
     formatSchema(): string {
         return this.name;
@@ -77,6 +101,11 @@ export class EnumType implements UserDefinedType {
 }
 export class RecordType implements UserDefinedType {
     name: string = ''
+    fields: NamedType[] = []
+
+    get children(): IRType[] {
+        return [];
+    }
 
     formatSchema(): string {
         return this.name;

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { type FileDesc, loadAndInitGo } from './wasm-interface.js'
 import { SourceError } from './types.js';
+import { generateCode } from './codegen.js'
 
 const { analyzeSourceFiles } = await loadAndInitGo();
 
@@ -29,7 +30,7 @@ function main() {
         res.renderToConsole()
         process.exit(1)
     }
-    console.dir(res, { depth: 7 })
+    generateCode(res).then(console.log);
 }
 
 if (isMain(import.meta.url)) {
