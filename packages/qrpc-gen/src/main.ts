@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import cmd, { command, option, restPositionals } from 'cmd-ts'
@@ -59,7 +60,7 @@ export async function genSchemasFromFilesWithConfig(config: Config): Promise<num
 const entrypoint = command({
     name: 'qrpc-gen',
     description: 'Generate .ts Schemas from .qrpc Files',
-    version: '0.1.0',
+    version: '0.1.1',
     args: {
         inputFiles: restPositionals({ type: cmd.string, displayName: 'definitions' }),
         outputFile: option({ long: 'output', short: 'o', type: cmd.string }),
