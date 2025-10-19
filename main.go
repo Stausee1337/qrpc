@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/urfave/cli/v2"
 
@@ -37,7 +37,7 @@ func genSchemasFromFiles(files []string, outputDir string) int {
 		return 1
 	}
 
-	packageName := path.Base(outputDir)
+	packageName := filepath.Base(outputDir)
 	err := codegen.CodegenFromAnalysis(
 		analysis,
 		codegen.Options{
@@ -65,7 +65,7 @@ func main() {
 			Required: true,
 		},
 	};
-	app.Version = "0.1.4"
+	app.Version = "0.1.5"
 
 	app.Action = func(ctx *cli.Context) error {
 		args := ctx.Args() 
