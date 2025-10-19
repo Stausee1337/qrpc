@@ -1,19 +1,11 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import cmd, { command, option, restPositionals } from 'cmd-ts'
 import { type FileDesc, loadAndInitGo } from './wasm-interface.js'
 import { SourceError } from './types.js';
 import { generateCode } from './codegen.js'
 
 const { analyzeSourceFiles } = await loadAndInitGo();
-
-function isMain(importMetaUrl: string): boolean {
-    return process.argv[1] === fileURLToPath(importMetaUrl)
-}
-
-
-export function genSchemasFromFilesWithConfig() {
-    console.log(process.argv)
-}
 
 function readFileToDesc(name: string): FileDesc {
     return {
@@ -22,18 +14,67 @@ function readFileToDesc(name: string): FileDesc {
     };
 }
 
-function main() {
-    const res = analyzeSourceFiles(
-        process.argv.slice(2).map(readFileToDesc),
-    )
+export interface Config {
+    inputFiles: string[];
+    outputFile: string
+}
+
+export async function genSchemasFromFilesWithConfig(config: Config): Promise<number> {
+    if (config.inputFiles.length === 0) {
+        try {
+            fs.writeFileSync(config.outputFile, '');
+        } catch (e) {
+            console.error(`${e}`)
+            return 1;
+        }
+    }
+
+    const filesWithContent: FileDesc[] = [];
+    for (const filename of config.inputFiles) {
+        try {
+            filesWithContent.push(readFileToDesc(filename));
+        } catch (e) {
+            console.error(`${e}`)
+            return 1;
+        }
+    }
+
+    const res = analyzeSourceFiles(filesWithContent)
     if (res instanceof SourceError) {
         res.renderToConsole()
-        process.exit(1)
+        return 1;
     }
-    generateCode(res).then(console.log);
+
+    const code = await generateCode(res)
+    try {
+        fs.writeFileSync(config.outputFile, code);
+    } catch (e) {
+        console.error(`${e}`)
+        return 1;
+    }
+
+    return 0;
+}
+
+const entrypoint = command({
+    name: 'qrpc-gen',
+    description: 'Generate .ts Schemas from .qrpc Files',
+    version: '0.1.0',
+    args: {
+        inputFiles: restPositionals({ type: cmd.string, displayName: 'definitions' }),
+        outputFile: option({ long: 'output', short: 'o', type: cmd.string }),
+    },
+    async handler(args) {
+        const code = await genSchemasFromFilesWithConfig(args);
+        process.exit(code);
+    },
+});
+
+function isMain(importMetaUrl: string): boolean {
+    return process.argv[1] === fileURLToPath(importMetaUrl)
 }
 
 if (isMain(import.meta.url)) {
-    main()
+    cmd.run(entrypoint, process.argv.slice(2))
 }
 

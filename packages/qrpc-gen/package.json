@@ -9,6 +9,7 @@
   "main": "./dist/main.js",
   "module": "./dist/main.js",
   "types": "./dist/main.d.ts",
+  "files": ["dist"],
   "scripts": {
     "build": "rollup -c",
     "types": "tsc"
@@ -18,6 +19,7 @@
     "rollup-plugin-copy": "^3.5.0"
   },
   "dependencies": {
+    "cmd-ts": "^0.14.3",
     "prettier": "^3.6.2"
   }
 }
