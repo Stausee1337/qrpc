@@ -50,7 +50,7 @@ export function Optional<T extends QSchema<any>>(
         parse(value) {
             if (value === undefined || value === null)
                 return undefined;
-            return type.parse(type);
+            return type.parse(value);
         },
         serialize(value) {
             return value;

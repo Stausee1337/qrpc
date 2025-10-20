@@ -1,6 +1,6 @@
 {
   "name": "qrpc-js",
-  "version": "0.1.2",
+  "version": "0.1.5",
   "description": "Cross-Stack Remote Procedure Calls via HTTP and JSON",
   "homepage": "https://github.com/Stausee1337/qrpc/blob/trunk/packages/qrpc-js#readme",
   "license": "MIT",

@@ -20,7 +20,7 @@ interface VoidOperation<I extends Record<string, QSchema<any>>> {
     (input: MapRecord<I>): Promise<void>;
 }
 
-export type Executor = (url: string, body: any) => Promise<Response>;
+export type Executor = (url: string, body: string) => Promise<Response>;
 type Constructor<T> = new(executor: Executor) => T;
 
 function overlayPrototype<T, P>(f: Constructor<T>, p: P): Constructor<T & P> {
@@ -128,7 +128,7 @@ abstract class $Service {
         name: string,
         input: any
     ): Promise<unknown> {
-        const response = await this.$executor(`/${kind}:${this.$name}.${name}`, input);
+        const response = await this.$executor(`/${kind}:${this.$name}.${name}`, JSON.stringify(input));
         const [data, error] = await this.#parseResponse(response);
         if (error !== undefined)
             throw `Unexpected API Response: ${error}`
@@ -154,7 +154,7 @@ abstract class $Service {
 }
 
 export function createSimpleExecutor(baseURL: string): Executor {
-    return async (endpoint: string, body: any): Promise<Response> => {
+    return async (endpoint: string, body: string): Promise<Response> => {
         return await fetch(`${baseURL}${endpoint}`, { method: "POST", body })
     }
 }
