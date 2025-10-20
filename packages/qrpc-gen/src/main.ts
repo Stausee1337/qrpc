@@ -60,7 +60,7 @@ export async function genSchemasFromFilesWithConfig(config: Config): Promise<num
 const entrypoint = command({
     name: 'qrpc-gen',
     description: 'Generate .ts Schemas from .qrpc Files',
-    version: '0.1.1',
+    version: '0.1.2',
     args: {
         inputFiles: restPositionals({ type: cmd.string, displayName: 'definitions' }),
         outputFile: option({ long: 'output', short: 'o', type: cmd.string }),

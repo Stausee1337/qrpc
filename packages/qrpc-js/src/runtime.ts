@@ -20,7 +20,7 @@ interface VoidOperation<I extends Record<string, QSchema<any>>> {
     (input: MapRecord<I>): Promise<void>;
 }
 
-type Executor = (url: string, body: any) => Promise<Response>;
+export type Executor = (url: string, body: any) => Promise<Response>;
 type Constructor<T> = new(executor: Executor) => T;
 
 function overlayPrototype<T, P>(f: Constructor<T>, p: P): Constructor<T & P> {
@@ -155,7 +155,7 @@ abstract class $Service {
 
 export function createSimpleExecutor(baseURL: string): Executor {
     return async (endpoint: string, body: any): Promise<Response> => {
-        return await fetch(`${baseURL}/${endpoint}`, { method: "POST", body })
+        return await fetch(`${baseURL}${endpoint}`, { method: "POST", body })
     }
 }
 
