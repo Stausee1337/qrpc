@@ -187,7 +187,7 @@ func (o *Operation) GoOutputs() string {
 	if isEmpty {
 		return "error"
 	}
-	return fmt.Sprintf("%v, error", o.ResultType.GoTypeRepr())
+	return fmt.Sprintf("*%v, error", o.ResultType.GoTypeRepr())
 }
 
 func (o *Operation) RealName() string {
