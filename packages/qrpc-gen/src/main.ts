@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import cmd, { command, option, restPositionals } from 'cmd-ts'
 import { type FileDesc, loadAndInitGo } from './wasm-interface.js'
 import { SourceError } from './types.js';
 import { generateCode } from './codegen.js'
+import esMain from './es-main.js';
 
 const { analyzeSourceFiles } = await loadAndInitGo();
 
@@ -60,7 +60,7 @@ export async function genSchemasFromFilesWithConfig(config: Config): Promise<num
 const entrypoint = command({
     name: 'qrpc-gen',
     description: 'Generate .ts Schemas from .qrpc Files',
-    version: '0.1.2',
+    version: '0.1.3',
     args: {
         inputFiles: restPositionals({ type: cmd.string, displayName: 'definitions' }),
         outputFile: option({ long: 'output', short: 'o', type: cmd.string }),
@@ -71,11 +71,7 @@ const entrypoint = command({
     },
 });
 
-function isMain(importMetaUrl: string): boolean {
-    return process.argv[1] === fileURLToPath(importMetaUrl)
-}
-
-if (isMain(import.meta.url)) {
+if (esMain(import.meta)) {
     cmd.run(entrypoint, process.argv.slice(2))
 }
 

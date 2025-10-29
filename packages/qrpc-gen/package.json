@@ -1,6 +1,6 @@
 {
   "name": "qrpc-gen",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Generate .ts Schemas from .qrpc Files",
   "homepage": "https://github.com/Stausee1337/qrpc/blob/trunk/packages/qrpc-gen#readme",
   "license": "MIT",
